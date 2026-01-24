@@ -1,0 +1,172 @@
+// Vibe Motion - Database Schema
+// Motion design video creation with Claude Code + Remotion
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Core project model - represents a Remotion project
+model Project {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+
+  // Folder structure
+  folderPath  String   @unique // /projects/{uuid}
+
+  // Remotion configuration
+  width       Int      @default(1920)
+  height      Int      @default(1080)
+  fps         Int      @default(30)
+  durationInFrames Int @default(300) // 10 seconds at 30fps
+
+  // Metadata
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  assets      Asset[]
+  sessions    Session[]
+  exports     Export[]
+
+  @@map("projects")
+}
+
+// Asset model - uploaded files (images, videos, audio, fonts)
+model Asset {
+  id            String   @id @default(uuid())
+  projectId     String
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // File information
+  filename      String   // Original filename
+  storedName    String   // UUID-based stored name
+  mimeType      String
+  fileSize      Int      // Bytes
+
+  // Paths
+  filePath      String   // Full path to file
+  thumbnailPath String?  // Path to thumbnail (for images/videos)
+
+  // Metadata (JSON for flexibility)
+  metadata      Json?    // width, height, duration, etc.
+
+  // Timestamps
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([projectId])
+  @@map("assets")
+}
+
+// Session model - terminal and studio server processes
+model Session {
+  id          String      @id @default(uuid())
+  projectId   String
+  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Session type
+  type        SessionType
+
+  // Process information
+  pid         Int?        // Process ID
+  port        Int?        // Port for studio server
+
+  // Status
+  status      SessionStatus @default(ACTIVE)
+
+  // Output buffer for reconnection
+  outputBuffer String?    @db.Text
+
+  // Timestamps
+  startedAt   DateTime    @default(now())
+  endedAt     DateTime?
+
+  // Relations
+  messages    Message[]
+
+  @@index([projectId])
+  @@map("sessions")
+}
+
+enum SessionType {
+  TERMINAL  // Claude Code PTY session
+  STUDIO    // Remotion Studio server
+}
+
+enum SessionStatus {
+  ACTIVE
+  INACTIVE
+  ERROR
+}
+
+// Message model - conversation history (optional)
+model Message {
+  id        String      @id @default(uuid())
+  sessionId String
+  session   Session     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  // Message content
+  role      MessageRole
+  content   String      @db.Text
+
+  // Timestamps
+  createdAt DateTime    @default(now())
+
+  @@index([sessionId])
+  @@map("messages")
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+// Export model - video render jobs
+model Export {
+  id            String       @id @default(uuid())
+  projectId     String
+  project       Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Export configuration
+  compositionId String       @default("Main")
+  format        ExportFormat @default(MP4)
+  codec         String       @default("h264")
+  quality       Int          @default(18) // CRF value
+
+  // Output
+  outputPath    String?
+  fileSize      Int?         // Bytes
+
+  // Status
+  status        ExportStatus @default(PENDING)
+  progress      Int          @default(0) // 0-100
+  errorMessage  String?
+
+  // Timestamps
+  createdAt     DateTime     @default(now())
+  startedAt     DateTime?
+  completedAt   DateTime?
+
+  @@index([projectId])
+  @@map("exports")
+}
+
+enum ExportFormat {
+  MP4
+  WEBM
+  GIF
+}
+
+enum ExportStatus {
+  PENDING
+  RENDERING
+  COMPLETED
+  FAILED
+}
