@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { unlink } from "fs/promises";
 import { db } from "@/lib/db";
-import { projectIdSchema } from "@/lib/validators/project";
 import { z } from "zod";
 
 type RouteContext = {

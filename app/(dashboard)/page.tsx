@@ -31,7 +31,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Plus, Folder, Trash2, Film, Image } from "lucide-react";
+import { Plus, Folder, Trash2, Film, Image as ImageIcon } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const RESOLUTION_PRESETS = [
@@ -379,7 +379,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
-                      <Image className="h-4 w-4" />
+                      <ImageIcon className="h-4 w-4" />
                       {project._count.assets} assets
                     </span>
                     <span className="flex items-center gap-1">

@@ -1,6 +1,5 @@
 import "dotenv/config";
 import { createServer } from "http";
-import { parse } from "url";
 import next from "next";
 import { WebSocketServer, WebSocket } from "ws";
 import { v4 as uuid } from "uuid";
@@ -187,7 +186,12 @@ function handleMessage(ws: WebSocket, data: string) {
 
 app.prepare().then(() => {
   const server = createServer((req, res) => {
-    const parsedUrl = parse(req.url!, true);
+    // Use WHATWG URL API instead of deprecated url.parse()
+    const url = new URL(req.url!, `http://${req.headers.host}`);
+    const parsedUrl = {
+      pathname: url.pathname,
+      query: Object.fromEntries(url.searchParams),
+    };
     handle(req, res, parsedUrl);
   });
 
@@ -198,10 +202,10 @@ app.prepare().then(() => {
 
   // Handle WebSocket upgrade requests manually
   server.on("upgrade", (request, socket, head) => {
-    const { pathname } = parse(request.url || "", true);
+    const upgradeUrl = new URL(request.url || "", `http://${request.headers.host}`);
 
     // Only handle our WebSocket path, let Next.js handle HMR
-    if (pathname === "/api/ws") {
+    if (upgradeUrl.pathname === "/api/ws") {
       wss.handleUpgrade(request, socket, head, (ws) => {
         wss.emit("connection", ws, request);
       });

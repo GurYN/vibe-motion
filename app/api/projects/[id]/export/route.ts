@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { join } from "path";
 import { db } from "@/lib/db";
 import { projectIdSchema } from "@/lib/validators/project";
 import {

@@ -1,14 +1,10 @@
 import sharp from "sharp";
 import { execFile } from "child_process";
 import { promisify } from "util";
-import { join, dirname } from "path";
-import { mkdir, writeFile, unlink } from "fs/promises";
+import { join } from "path";
+import { mkdir } from "fs/promises";
 import ffmpegPath from "ffmpeg-static";
-import {
-  getAssetType,
-  MIME_TO_EXTENSION,
-  type AssetType,
-} from "@/lib/validators/asset";
+import { getAssetType } from "@/lib/validators/asset";
 
 const execFileAsync = promisify(execFile);
 
@@ -118,12 +114,12 @@ async function processVideo(
   return { metadata, thumbnailPath };
 }
 
-// Extract audio metadata
+// Extract audio metadata (thumbnailDir and storedName kept for consistent signature)
 async function processAudio(
   filePath: string,
-  thumbnailDir: string,
-  storedName: string
+  ..._unused: [thumbnailDir: string, storedName: string]
 ): Promise<ProcessedAsset> {
+  void _unused; // Maintain consistent function signature with other processors
   // Get ffprobe path
   const ffprobePath = ffmpegPath?.replace("ffmpeg", "ffprobe") || "ffprobe";
 
@@ -155,10 +151,9 @@ async function processAudio(
 
 // Process font file (minimal metadata)
 async function processFont(
-  filePath: string,
-  thumbnailDir: string,
-  storedName: string
+  ..._unused: [filePath: string, thumbnailDir: string, storedName: string]
 ): Promise<ProcessedAsset> {
+  void _unused; // Maintain consistent function signature with other processors
   // Fonts don't have thumbnails or much metadata
   return {
     metadata: { format: "font" },

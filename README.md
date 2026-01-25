@@ -92,7 +92,7 @@ npm run dev
 
 ### Environment Variables
 
-Create a `.env` file:
+Create a `.env` file (or copy `.env.example` as `.env`):
 
 ```bash
 # Database
@@ -157,7 +157,7 @@ vibe-motion/
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│                         BROWSER                                  │
+│                            BROWSER                               │
 │  ┌────────────────┐  ┌────────────────┐  ┌────────────────────┐  │
 │  │   xterm.js     │  │ Remotion       │  │   React UI         │  │
 │  │   Terminal     │  │ Studio         │  │   Components       │  │
@@ -168,7 +168,7 @@ vibe-motion/
            │                   │                   │
            ▼                   ▼                   ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│                    CUSTOM NEXT.JS SERVER                         │
+│                      VIBE MOTION SERVER                          │
 │  ┌────────────────┐  ┌────────────────┐  ┌────────────────────┐  │
 │  │  WebSocket     │  │  API Routes    │  │  Process Manager   │  │
 │  │  Handler       │  │  /api/*        │  │                    │  │

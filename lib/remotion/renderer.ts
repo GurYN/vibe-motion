@@ -2,7 +2,6 @@ import { spawn, type ChildProcess } from "child_process";
 import { EventEmitter } from "events";
 import { join, resolve } from "path";
 import { mkdir } from "fs/promises";
-import { v4 as uuid } from "uuid";
 import type { ExportFormat } from "@/lib/validators/export";
 
 interface RenderJob {

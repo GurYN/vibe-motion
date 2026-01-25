@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useCallback,
+  useSyncExternalStore,
+} from "react";
 
 type Theme = "light" | "dark" | "system";
 
@@ -12,58 +18,77 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+const THEME_KEY = "theme";
+
+// Subscribe to storage changes
+function subscribeToStorage(callback: () => void) {
+  window.addEventListener("storage", callback);
+  return () => window.removeEventListener("storage", callback);
+}
+
+// Get theme from localStorage (client only), default to "dark"
+function getStoredTheme(): Theme {
+  if (typeof window === "undefined") return "dark";
+  return (localStorage.getItem(THEME_KEY) as Theme) || "dark";
+}
+
+// Server snapshot always returns "dark"
+function getServerSnapshot(): Theme {
+  return "dark";
+}
+
+// Subscribe to system preference changes
+function subscribeToMediaQuery(callback: () => void) {
+  const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  mediaQuery.addEventListener("change", callback);
+  return () => mediaQuery.removeEventListener("change", callback);
+}
+
+// Get current system preference
+function getSystemPreference(): "light" | "dark" {
+  if (typeof window === "undefined") return "light";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+}
+
+// Server snapshot for system preference (matches default theme)
+function getSystemPreferenceServer(): "light" | "dark" {
+  return "dark";
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("system");
-  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
+  // Use useSyncExternalStore for hydration-safe localStorage access
+  const theme = useSyncExternalStore(
+    subscribeToStorage,
+    getStoredTheme,
+    getServerSnapshot
+  );
 
-  useEffect(() => {
-    // Get stored theme or default to system
-    const stored = localStorage.getItem("theme") as Theme | null;
-    if (stored) {
-      setTheme(stored);
-    }
-  }, []);
+  // Use useSyncExternalStore for system preference
+  const systemPreference = useSyncExternalStore(
+    subscribeToMediaQuery,
+    getSystemPreference,
+    getSystemPreferenceServer
+  );
 
+  // Compute resolved theme (no state needed)
+  const resolvedTheme: "light" | "dark" =
+    theme === "system" ? systemPreference : theme;
+
+  // Apply theme class to document
   useEffect(() => {
     const root = window.document.documentElement;
-
-    // Remove both classes first
     root.classList.remove("light", "dark");
+    root.classList.add(resolvedTheme);
+  }, [resolvedTheme]);
 
-    let resolved: "light" | "dark";
-
-    if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
-      resolved = systemTheme;
-    } else {
-      resolved = theme;
-    }
-
-    root.classList.add(resolved);
-    setResolvedTheme(resolved);
-
-    // Store preference
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  // Listen for system theme changes
-  useEffect(() => {
-    if (theme !== "system") return;
-
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const handleChange = (e: MediaQueryListEvent) => {
-      const root = window.document.documentElement;
-      root.classList.remove("light", "dark");
-      const newTheme = e.matches ? "dark" : "light";
-      root.classList.add(newTheme);
-      setResolvedTheme(newTheme);
-    };
-
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
-  }, [theme]);
+  // setTheme writes to localStorage and triggers re-render via useSyncExternalStore
+  const setTheme = useCallback((newTheme: Theme) => {
+    localStorage.setItem(THEME_KEY, newTheme);
+    // Dispatch storage event to trigger useSyncExternalStore update
+    window.dispatchEvent(new StorageEvent("storage", { key: THEME_KEY }));
+  }, []);
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme, resolvedTheme }}>

@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 
 interface PreviewStudioProps {
   projectId: string;
-  width: number;
-  height: number;
+  width?: number;
+  height?: number;
 }
 
-export function PreviewStudio({ projectId, width, height }: PreviewStudioProps) {
+export function PreviewStudio({ projectId }: PreviewStudioProps) {
   const [studioPort, setStudioPort] = useState<number | null>(null);
   const [isStarting, setIsStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +37,7 @@ export function PreviewStudio({ projectId, width, height }: PreviewStudioProps) 
   }, [projectId]);
 
   // Start polling to check if studio is ready
-  const startPollingForReady = useCallback((port: number) => {
+  const startPollingForReady = useCallback(() => {
     if (pollingIntervalRef.current) {
       clearInterval(pollingIntervalRef.current);
     }
@@ -79,7 +79,7 @@ export function PreviewStudio({ projectId, width, height }: PreviewStudioProps) 
             setStudioPort(data.port);
             // Check if it's actually ready
             if (!data.ready) {
-              startPollingForReady(data.port);
+              startPollingForReady();
             }
           }
         }
@@ -124,7 +124,7 @@ export function PreviewStudio({ projectId, width, height }: PreviewStudioProps) 
               setIsStarting(false);
               setError(null);
               // Start polling to check when studio is actually ready
-              startPollingForReady(message.port);
+              startPollingForReady();
             }
             break;
 

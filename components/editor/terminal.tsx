@@ -18,7 +18,7 @@ export function Terminal({ projectId, onReady }: TerminalProps) {
   const wsRef = useRef<WebSocket | null>(null);
   const sessionConnectedRef = useRef(false);
   const onReadyRef = useRef(onReady);
-  const [isConnected, setIsConnected] = useState(false);
+  const [, setIsConnected] = useState(false);
 
   // Keep the ref updated
   useEffect(() => {

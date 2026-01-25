@@ -1,6 +1,6 @@
 {
   "name": "vibe-motion",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "scripts": {
     "dev": "tsx watch --ignore './projects/**' server.ts",

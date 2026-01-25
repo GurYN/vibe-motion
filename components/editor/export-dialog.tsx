@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -124,10 +123,12 @@ export function ExportDialog({
 
   // Start polling when dialog opens
   useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+
     if (open) {
       fetchCompositions();
       fetchExports();
-      const interval = setInterval(fetchExports, 2000);
+      interval = setInterval(fetchExports, 2000);
       setPollInterval(interval);
     } else {
       if (pollInterval) {
@@ -137,10 +138,11 @@ export function ExportDialog({
     }
 
     return () => {
-      if (pollInterval) {
-        clearInterval(pollInterval);
+      if (interval) {
+        clearInterval(interval);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, projectId, fetchCompositions]);
 
   // Update codec when format changes

@@ -123,7 +123,7 @@ export function AssetDropzone({ projectId, onUploadComplete }: AssetDropzoneProp
               )
             );
           }
-        } catch (error) {
+        } catch {
           setUploadingFiles((prev) =>
             prev.map((uf) =>
               uf.file === file

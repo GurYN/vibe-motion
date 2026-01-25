@@ -4,10 +4,7 @@ import { join, parse as parsePath } from "path";
 import { db } from "@/lib/db";
 import { projectIdSchema } from "@/lib/validators/project";
 import {
-  validateFile,
   sanitizeFilename,
-  getAssetType,
-  MIME_TO_EXTENSION,
   MAX_FILE_SIZE,
   ALL_ALLOWED_TYPES,
 } from "@/lib/validators/asset";

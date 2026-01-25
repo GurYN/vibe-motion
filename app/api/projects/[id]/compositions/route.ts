@@ -56,7 +56,7 @@ async function scanCompositionsFolder(remotionPath: string): Promise<string[]> {
         }
       }
     }
-  } catch (error) {
+  } catch {
     // Folder might not exist, that's ok
   }
 

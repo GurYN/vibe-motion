@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // User-generated Remotion projects (dynamically created and modified by Claude)
+    "projects/**",
   ]),
 ]);
 
