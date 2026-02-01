@@ -1,11 +1,63 @@
 import * as pty from "node-pty";
 import { EventEmitter } from "events";
 import { existsSync } from "fs";
+import { execSync } from "child_process";
 import {
   getSafeWorkingDirectory,
   getSafeEnvironment,
   truncateOutputBuffer,
 } from "./security";
+
+// Cache the resolved claude path
+let cachedClaudePath: string | null = null;
+
+// Resolve the full path to the claude executable
+function getClaudePath(): string {
+  if (cachedClaudePath) {
+    return cachedClaudePath;
+  }
+
+  // Check environment variable first
+  if (process.env.CLAUDE_PATH && existsSync(process.env.CLAUDE_PATH)) {
+    cachedClaudePath = process.env.CLAUDE_PATH;
+    return cachedClaudePath;
+  }
+
+  // Common installation locations
+  const commonPaths = [
+    `${process.env.HOME}/.local/bin/claude`,
+    "/usr/local/bin/claude",
+    `${process.env.HOME}/.npm-global/bin/claude`,
+    "/opt/homebrew/bin/claude",
+  ];
+
+  for (const path of commonPaths) {
+    if (existsSync(path)) {
+      cachedClaudePath = path;
+      return cachedClaudePath;
+    }
+  }
+
+  // Try to resolve using which command (no user input - hardcoded command)
+  try {
+    const resolved = execSync("which claude", {
+      encoding: "utf8",
+      env: process.env,
+    }).trim();
+    if (resolved && existsSync(resolved)) {
+      cachedClaudePath = resolved;
+      return cachedClaudePath;
+    }
+  } catch {
+    // which command failed, continue
+  }
+
+  // Fallback to just "claude" and hope it's in PATH
+  console.warn(
+    "Could not resolve full path to claude, falling back to PATH lookup",
+  );
+  return "claude";
+}
 
 export interface PTYSession {
   id: string;
@@ -40,7 +92,9 @@ class PTYManager extends EventEmitter {
     // Create PTY process - spawn Claude Code directly
     let ptyProcess: pty.IPty;
     try {
-      ptyProcess = pty.spawn("claude", ["--dangerously-skip-permissions"], {
+      const claudePath = getClaudePath();
+      console.log(`Using claude at: ${claudePath}`);
+      ptyProcess = pty.spawn(claudePath, ["--dangerously-skip-permissions"], {
         name: "xterm-256color",
         cols: 80,
         rows: 24,
@@ -74,7 +128,7 @@ class PTYManager extends EventEmitter {
     // Handle PTY exit
     ptyProcess.onExit(({ exitCode, signal }) => {
       console.log(
-        `PTY session ${sessionId} exited with code ${exitCode}, signal ${signal}`
+        `PTY session ${sessionId} exited with code ${exitCode}, signal ${signal}`,
       );
       this.emit("exit", sessionId, exitCode, signal);
       this.sessions.delete(sessionId);

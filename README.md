@@ -107,6 +107,16 @@ NODE_ENV="development"
 PROJECTS_ROOT="${PWD}/projects"
 ```
 
+### Troubleshooting
+
+#### Terminal UI Error
+If you get this error in terminal UI : `Error: Failed to create terminal session: posix_spawnp failed.`
+
+Fix node-pty permissions (Thank you Marc)
+```
+chmod +x node_modules/node-pty/prebuilds/darwin-arm64/spawn-helper
+```
+
 ## Project Structure
 
 ```
